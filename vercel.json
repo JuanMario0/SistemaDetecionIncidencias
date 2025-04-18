@@ -1,23 +1,15 @@
 {
     "version": 2,
     "builds": [
-        {
-            "src": "api/app.py",
-            "use": "@vercel/python"
-        },
-        {
-            "src": "static/*",
-            "use": "@vercel/static"
-        }
+      {
+        "src": "get-stops-QgsTv1Lf10Nd4hXr5cmsEraV2KH1E3.py",
+        "use": "@vercel/python"
+      }
     ],
     "routes": [
-        {
-            "src": "/static/(.*)",
-            "dest": "/static/$1"
-        },
-        {
-            "src": "/(.*)",
-            "dest": "/api/app.py"
-        }
+      {
+        "src": "/(.*)",
+        "dest": "get-stops-QgsTv1Lf10Nd4hXr5cmsEraV2KH1E3.py"
+      }
     ]
-}
+  }

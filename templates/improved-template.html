@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análisis de Incidencias RTP en la CDMX</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        :root {
+            --primary: #9c1e24;
+            --secondary: #6c757d;
+            --success: #198754;
+            --info: #0dcaf0;
+            --warning: #ffc107;
+            --danger: #dc3545;
+            --light: #f8f9fa;
+            --dark: #212529;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .navbar {
+            background-color: #9c1e24;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .navbar-brand {
+            font-weight: 700;
+            color: white !important;
+        }
+        
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease;
+            margin-bottom: 20px;
+            border: none;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card-header {
+            background-color: white;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            font-weight: 600;
+            padding: 15px 25px;
+            border-radius: 10px 10px 0 0 !important;
+        }
+        
+        .card-body {
+            padding: 20px;
+        }
+        
+        #map {
+            height: 500px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        
+        .metric-card {
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .metric-label {
+            font-size: 0.9rem;
+            color: var(--secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .table {
+            border-collapse: collapse;
+            border-spacing: 0;
+            width: 100%;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .table thead th {
+            background-color: rgba(13, 110, 253, 0.1);
+            color: var(--primary);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+            padding: 12px 15px;
+        }
+        
+        .table tbody tr:nth-of-type(odd) {
+            background-color: rgba(0, 0, 0, 0.02);
+        }
+        
+        .table tbody td {
+            padding: 12px 15px;
+            vertical-align: middle;
+        }
+        
+        
+        .form-select, .form-control {
+            border-radius: 8px;
+            padding: 10px 15px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        .form-select:focus, .form-control:focus {
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+            border-color: #86b7fe;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+            border-color: var(--primary);
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-weight: 500;
+        }
+        
+        .btn-primary:hover {
+            background-color: #d70b37;
+            border-color: #0a58ca;
+        }
+        
+        .section-title {
+            position: relative;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            font-weight: 700;
+            color: var(--dark);
+        }
+        
+        .section-title::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            height: 4px;
+            width: 50px;
+            background-color: var(--primary);
+            border-radius: 2px;
+        }
+        
+        .delay-badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+        
+        .delay-high {
+            background-color: rgba(220, 53, 69, 0.1);
+            color: var(--danger);
+        }
+        
+        .delay-medium {
+            background-color: rgba(255, 193, 7, 0.1);
+            color: var(--warning);
+        }
+        
+        .delay-low {
+            background-color: rgba(25, 135, 84, 0.1);
+            color: var(--success);
+        }
+        
+        .cluster-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .cluster-btn {
+            flex: 1;
+            min-width: 100px;
+            text-align: center;
+            padding: 10px;
+            border-radius: 8px;
+            background-color: white;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .cluster-btn.active {
+            background-color: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        .cluster-btn:hover:not(.active) {
+            background-color: rgba(13, 110, 253, 0.1);
+        }
+        
+        .footer {
+            background-color: white;
+            padding: 20px 0;
+            margin-top: 40px;
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+            text-align: center;
+            color: var(--secondary);
+        }
+        
+        @media (max-width: 768px) {
+            .card {
+                margin-bottom: 15px;
+            }
+            
+            #map {
+                height: 300px;
+            }
+            
+            .metric-value {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-bus me-2"></i>
+                Análisis de Incidencias RTP
+            </a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Dashboard Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <h1 class="text-center mb-0">
+                            <i class="fas fa-chart-line me-2 text-primary"></i>
+                            Dashboard de Incidencias en Transporte RTP
+                        </h1>
+                        <p class="text-center text-muted mt-2">
+                            Análisis de retrasos y agrupamiento de paradas en la Ciudad de México
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Metrics Row -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card metric-card">
+                    <div class="card-body">
+                        <div class="metric-value">{{ silhouette|round(3) }}</div>
+                        <div class="metric-label">Silhouette Score</div>
+                        <small class="text-muted">Calidad del agrupamiento</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card metric-card">
+                    <div class="card-body">
+                        <div class="metric-value">{{ cluster_delays.mean()|round(1) }}</div>
+                        <div class="metric-label">Retraso Promedio</div>
+                        <small class="text-muted">Minutos de retraso</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card metric-card">
+                    <div class="card-body">
+                        <div class="metric-value">{{ num_clusters }}</div>
+                        <div class="metric-label">Clústeres</div>
+                        <small class="text-muted">Grupos de paradas</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Explanation Row -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-info-circle me-2 text-primary"></i>
+                        ¿Qué significa cada parte del dashboard?
+                    </div>
+                    <div class="card-body">
+                        <ul>
+                            <li><strong>Silhouette Score:</strong> Indica la calidad del agrupamiento de las paradas. Un valor más cercano a 1 significa que los clústeres están bien definidos.</li>
+                            <li><strong>Retraso Promedio:</strong> Muestra el retraso promedio en minutos de todas las paradas agrupadas.</li>
+                            <li><strong>Clústeres:</strong> Representa los grupos de paradas que comparten características similares.</li>
+                            <li><strong>Retraso Promedio por Clúster:</strong> Tabla que muestra el retraso promedio de cada clúster.</li>
+                            <li><strong>Top 10 Paradas con Mayores Retrasos:</strong> Lista de las paradas con los retrasos más altos.</li>
+                            <li><strong>Mapa Interactivo:</strong> Permite visualizar las paradas y sus retrasos en un mapa. Puedes seleccionar un clúster y una parada específica para ver más detalles.</li>
+                        </ul>
+                        <p class="text-muted">Utiliza las opciones interactivas para explorar los datos y obtener información detallada sobre las paradas y sus retrasos.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Clusters and Top Delays -->
+        <div class="row">
+            <!-- Cluster Delays -->
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <i class="fas fa-layer-group me-2 text-primary"></i>
+                        Retraso Promedio por Clúster
+                    </div>
+                    <div class="card-body">
+                        {{ cluster_table | safe }}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Top Delays -->
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <i class="fas fa-exclamation-triangle me-2 text-warning"></i>
+                        Top 10 Paradas con Mayores Retrasos
+                    </div>
+                    <div class="card-body">
+                        {{ top_table | safe }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Interactive Map Section -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-map-marked-alt me-2 text-primary"></i>
+                        Mapa Interactivo de Paradas
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <!-- Cluster and Stop Selection -->
+                            <div class="col-md-4">
+                                <h5 class="mb-3">Seleccionar Clúster</h5>
+                                <div class="cluster-selector mb-4">
+                                    {% for cluster_id in cluster_ids %}
+                                        {% if cluster_id|string|trim != "" and cluster_id|string|trim not in ["[", "]", ","] %}
+                                        <div class="cluster-btn {% if loop.first %}active{% endif %}" data-cluster="{{ cluster_id }}">
+                                            Clúster {{ cluster_id }}
+                                        </div>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                                
+                                <h5 class="mb-3">Seleccionar Parada</h5>
+                                <div class="mb-3">
+                                    <select id="stop" class="form-select">
+                                        <!-- Options will be populated by JavaScript -->
+                                    </select>
+                                </div>
+                                
+                                <div id="stop-details" class="mt-4">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <i class="fas fa-info-circle me-2 text-primary"></i>
+                                            Detalles de la Parada
+                                        </div>
+                                        <div class="card-body">
+                                            <div id="stop-name" class="fw-bold fs-5 mb-2">Seleccione una parada</div>
+                                            <div id="stop-delay" class="mb-2">
+                                                <span class="delay-badge delay-medium">Retraso: -- min</span>
+                                            </div>
+                                            <div id="stop-coords" class="text-muted small">
+                                                <i class="fas fa-map-pin me-1"></i> Lat: --, Lon: --
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Map -->
+                            <div class="col-md-8">
+                                <div id="map"></div>
+                                <div class="mt-3 text-end">
+                                    <a href="/static/heatmap.html" target="_blank" class="btn btn-primary">
+                                        <i class="fas fa-fire me-2"></i>
+                                        Ver Mapa de Calor Completo
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer mt-5">
+        <div class="container">
+            <p class="mb-0">© 2023 Análisis de Incidencias RTP | Desarrollado con <i class="fas fa-heart text-danger"></i> para la CDMX</p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+    /* eslint-disable */
+    try {
+        let map = L.map('map').setView([parseFloat("{{ map_center[0]|float }}"), parseFloat("{{ map_center[1]|float }}")], 12);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+        
+        let marker;
+        // Asegurarse de que currentCluster sea un número entero
+        let currentCluster = parseInt("{{ cluster_ids[0] }}");
+        console.log("Cluster inicial:", currentCluster);
+        
+        // Handle cluster button clicks
+        $('.cluster-btn').on('click', function() {
+            $('.cluster-btn').removeClass('active');
+            $(this).addClass('active');
+            const clusterId = parseInt($(this).data('cluster'));
+            if (isNaN(clusterId)) {
+                console.error("Cluster ID no válido:", clusterId);
+                return;
+            }
+            console.log("Cluster seleccionado:", clusterId);
+            currentCluster = clusterId;
+            updateStops();
+        });
+        
+        function updateStops() {
+            console.log("Actualizando paradas para el clúster:", currentCluster);
+            $.ajax({
+                url: `/get_stops/${currentCluster}`,
+                method: 'GET',
+                dataType: 'json',
+                success: function(data) {
+                    console.log("Paradas recibidas:", data.length);
+                    $('#stop').empty();
+                    
+                    // Sort stops by name for better usability
+                    data.sort((a, b) => a.stop_name.localeCompare(b.stop_name));
+                    
+                    data.forEach(function(stop) {
+                        $('#stop').append(`<option value="${stop.stop_id}">${stop.stop_name}</option>`);
+                    });
+                    
+                    // Update map with first stop
+                    if (data.length > 0) {
+                        updateMap();
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error("Error al obtener paradas:", error);
+                    console.error("Respuesta:", xhr.responseText);
+                }
+            });
+        }
+        
+        function updateMap() {
+            const stopId = $('#stop').val();
+            
+            if (!stopId) {
+                console.warn("No hay ID de parada seleccionado");
+                return;
+            }
+            
+            console.log("Actualizando mapa para la parada:", stopId);
+            $.ajax({
+                url: `/get_stop_details/${stopId}`,
+                method: 'GET',
+                dataType: 'json',
+                success: function(data) {
+                    console.log("Detalles de parada recibidos:", data);
+                    // Update marker on map
+                    if (marker) {
+                        map.removeLayer(marker);
+                    }
+                    
+                    // Create custom icon
+                    const busIcon = L.divIcon({
+                        html: `<i class="fas fa-bus" style="font-size: 24px; color: #0d6efd;"></i>`,
+                        className: 'bus-icon',
+                        iconSize: [24, 24],
+                        iconAnchor: [12, 12]
+                    });
+                    
+                    marker = L.marker([data.stop_lat, data.stop_lon], {icon: busIcon}).addTo(map)
+                        .bindPopup(`<b>${data.stop_name}</b><br>Retraso: ${data.simulated_delay.toFixed(1)} min`);
+                    
+                    map.setView([data.stop_lat, data.stop_lon], 15);
+                    
+                    // Update stop details card
+                    $('#stop-name').text(data.stop_name);
+                    
+                    // Set delay badge class based on delay value
+                    let delayClass = 'delay-low';
+                    if (data.simulated_delay > 10) {
+                        delayClass = 'delay-high';
+                    } else if (data.simulated_delay > 5) {
+                        delayClass = 'delay-medium';
+                    }
+                    
+                    $('#stop-delay').html(`<span class="delay-badge ${delayClass}">Retraso: ${data.simulated_delay.toFixed(1)} min</span>`);
+                    $('#stop-coords').html(`<i class="fas fa-map-pin me-1"></i> Lat: ${data.stop_lat.toFixed(5)}, Lon: ${data.stop_lon.toFixed(5)}`);
+                },
+                error: function(xhr, status, error) {
+                    console.error("Error al obtener detalles de la parada:", error);
+                    console.error("Respuesta:", xhr.responseText);
+                }
+            });
+        }
+        
+        // Initialize with the first cluster
+        $(document).ready(function() {
+            console.log("Documento listo, inicializando...");
+            // Asegurarse de que los botones de clúster estén configurados correctamente
+            $('.cluster-btn').first().addClass('active');
+            
+            updateStops();
+            
+            // Add event listener for stop selection
+            $('#stop').on('change', function() {
+                updateMap();
+            });
+        });
+    } catch (e) {
+        console.error("Error al inicializar el mapa:", e);
+    }
+    /* eslint-enable */
+</script>
+</body>
+</html>

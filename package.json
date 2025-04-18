@@ -1,0 +1,12 @@
+{
+    "name": "rtp-analysis-app",
+    "version": "1.0.0",
+    "description": "RTP Transportation Analysis Dashboard",
+    "private": true,
+    "scripts": {
+      "build": "echo 'No build step required for this Python application'"
+    },
+    "engines": {
+      "node": ">=18.0.0"
+    }
+  }

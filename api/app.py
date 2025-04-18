@@ -1,4 +1,4 @@
-from flask import Flask, render_template_string
+from flask import Flask, render_template_string, request, jsonify, render_template, send_from_directory
 import pandas as pd
 import numpy as np
 from sklearn.cluster import KMeans
@@ -9,19 +9,15 @@ import joblib
 import os
 
 # Crear la aplicación Flask con el directorio raíz explícito
-app = Flask(__name__, static_folder='../static', static_url_path='/static')
-# Asegurarse de que la carpeta 'static' existe en la raíz del proyecto
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # Directorio de app.py
-STATIC_DIR = os.path.join(BASE_DIR, '..', 'static')    # Subir un nivel desde api/
-if not os.path.exists(STATIC_DIR):
-    os.makedirs(STATIC_DIR)
+app = Flask(__name__, template_folder='../templates', static_folder='../static')
+# Asegurarse de que la carpeta 'static' existe
+if not os.path.exists('static'):
+    os.makedirs('static')
 
+# Asegurarse de que la carpeta 'templates' existe
+if not os.path.exists('templates'):
+    os.makedirs('templates')
 
-# Verificar si heatmap.html existe, si no, generarlo
-heatmap_path = os.path.join(STATIC_DIR, 'heatmap.html')
-print(f"Buscando heatmap.html en: {heatmap_path}")  # Depuración
-if not os.path.exists(heatmap_path):
-    print("Generando heatmap.html...")
 # Cargar y procesar datos
 full_data = pd.read_csv("full_data.csv")
 full_data['arrival_time'] = pd.to_datetime(full_data['arrival_time'], format='%H:%M:%S', errors='coerce')
@@ -66,37 +62,77 @@ for _, row in top_delays.iterrows():
         icon=folium.Icon(color='red', icon='bus', prefix='fa')
     ).add_to(m)
 m.save("static/heatmap.html")
-print(f"heatmap.html generado en: {heatmap_path}")
+
+# Nueva ruta para obtener las paradas por clúster
+@app.route('/get_stops/<int:cluster_id>')
+def get_stops(cluster_id):
+    print(f"Cluster ID recibido: {cluster_id}")
+    stops_in_cluster = full_data[full_data['cluster'] == cluster_id][['stop_id', 'stop_name', 'stop_lat', 'stop_lon', 'simulated_delay']]
+    return stops_in_cluster.to_json(orient='records')
+
+# Nueva ruta para obtener detalles de una parada específica
+@app.route('/get_stop_details/<string:stop_id>')
+def get_stop_details(stop_id):
+    # Filtrar los detalles de la parada por su identificador
+    stop_details = full_data[full_data['stop_id'] == stop_id][['stop_name', 'stop_lat', 'stop_lon', 'simulated_delay']]
+    
+    # Verificar si se encontró la parada
+    if stop_details.empty:
+        return jsonify({'error': 'Stop not found'}), 404
+    
+    # Seleccionar la primera fila (ya que stop_id debería ser único)
+    stop_details = stop_details.iloc[0]
+    return jsonify({
+        'stop_name': stop_details['stop_name'],
+        'stop_lat': stop_details['stop_lat'],
+        'stop_lon': stop_details['stop_lon'],
+        'simulated_delay': stop_details['simulated_delay']
+    })
 
 @app.route('/')
 def home():
-    # Plantilla HTML simple para mostrar métricas y tabla
-    html = """
-    <html>
-    <head><title>Incidencias RTP</title>
-    <style>
-        body { font-family: Arial; margin: 20px; }
-        table { border-collapse: collapse; width: 100%; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f2f2f2; }
-    </style>
-    </head>
-    <body>
-    <h1>Incidencias en Transporte RTP</h1>
-    <h3>Métricas</h3>
-    <p>Silhouette Score: {{ silhouette }}</p>
-    <h3>Retraso Promedio por Clúster (minutos)</h3>
-    {{ cluster_table | safe }}
-    <h3>Top 10 Paradas con Mayores Retrasos</h3>
-    {{ top_table | safe }}
-    <h3>Mapa de Calor</h3>
-    <iframe src="/static/heatmap.html" width="100%" height="500px" frameborder="0"></iframe>
-    </body>
-    </html>
-    """
-    cluster_table = cluster_delays.to_frame().to_html()
-    top_table = top_delays[['stop_name', 'simulated_delay']].to_html(index=False)
-    return render_template_string(html, silhouette=silhouette_avg, cluster_table=cluster_table, top_table=top_table)
+    # En lugar de usar render_template_string con HTML en línea
+    # ahora usamos render_template con el archivo HTML
+    cluster_table = cluster_delays.to_frame().to_html(classes="table table-striped")
+    top_table = top_delays[['stop_name', 'simulated_delay']].to_html(index=False, classes="table table-striped")
+    
+    # Filtrar solo los valores numéricos válidos y convertirlos a enteros
+    cluster_ids = []
+    for x in full_data['cluster'].unique():
+        # Convertir a string para verificar si es un dígito
+        x_str = str(x)
+        # Filtrar solo valores que son dígitos y no son NaN
+        if x_str.isdigit() and pd.notna(x):
+            cluster_ids.append(int(x_str))
+    
+    # Ordenar los clústeres numéricamente
+    cluster_ids.sort()
+
+    # Imprimir para depuración
+    print("Cluster IDs filtrados:", cluster_ids)
+    
+    num_clusters = len(set(cluster_ids))  # Usamos `set` para asegurarnos de que sean únicos
+    
+    map_center = [delays_by_stop['stop_lat'].mean(), delays_by_stop['stop_lon'].mean()]
+    
+    print("map_center:", map_center)
+    
+    import json
+    return render_template(
+        'improved-template.html', 
+        silhouette=silhouette_avg, 
+        cluster_table=cluster_table, 
+        top_table=top_table, 
+        cluster_ids=json.dumps(cluster_ids),
+        map_center=json.dumps(map_center),
+        cluster_delays=cluster_delays,
+        num_clusters=num_clusters # Se pasa el número de clústeres a la plantilla
+    )
+
+@app.route('/heatmap')
+def heatmap():
+    return send_from_directory('static', 'heatmap.html')
 
 if __name__ == '__main__':
+    print("Current working directory:", os.getcwd())
     app.run(host='0.0.0.0', port=3000)
