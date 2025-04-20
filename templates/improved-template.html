@@ -20,6 +20,7 @@
             --danger: #dc3545;
             --light: #f8f9fa;
             --dark: #212529;
+            --neutral: #6c757d;
         }
         
         body {
@@ -232,6 +233,60 @@
                 font-size: 1.5rem;
             }
         }
+
+        /* Estilos para la sección de comentarios */
+        .comment-section {
+            margin-top: 40px;
+        }
+
+        .comment-card {
+            border-left: 5px solid;
+            border-radius: 8px;
+            height: 100%; /* Asegura que todas las cards tengan la misma altura */
+            display: flex;
+            flex-direction: column;
+        }
+
+        .comment-card.positive {
+            border-left-color: var(--success);
+        }
+
+        .comment-card.negative {
+            border-left-color: var(--danger);
+        }
+
+        .comment-card.neutral {
+            border-left-color: var(--neutral); /* Borde gris para neutros */
+        }
+
+        .comment-card ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            max-height: 200px; /* Limita la altura de la lista */
+            overflow-y: auto; /* Añade desplazamiento vertical si hay más comentarios */
+        }
+
+        .comment-card li {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .comment-card li:last-child {
+            border-bottom: none;
+        }
+
+        #classificationResult {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 8px;
+            background-color: rgba(0, 0, 0, 0.02);
+        }
+
+        .download-btn {
+            margin-top: 20px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -410,7 +465,102 @@
                 </div>
             </div>
         </div>
+
+        <!-- Cards para comentarios positivos y negativos -->
+        <div class="row comment-section mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-comments me-2 text-primary"></i>
+                        Análisis de Comentarios
+                    </div>
+                    <div class="card-body">
+                        <!-- Formulario para agregar nuevos comentarios -->
+                        <h5 class="mb-3">Agregar Nuevo Comentario</h5>
+                        <form id="commentForm">
+                            <div class="form-group mb-3">
+                                <label for="commentInput">Escribe tu comentario:</label>
+                                <textarea class="form-control" id="commentInput" name="comment" rows="3" required></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Clasificar Comentario</button>
+                        </form>
+                        <div id="classificationResult"></div>
+
+                        <!-- Cards para comentarios positivos y negativos -->
+                        <div class="row mt-4">
+                            <div class="col-md-6">
+                                <div class="card comment-card positive">
+                                    <div class="card-header">
+                                        <i class="fas fa-thumbs-up me-2"></i>
+                                        Comentarios Positivos/Sugerencias
+                                    </div>
+                                    <div class="card-body">
+                                        {% if top_positivos %}
+                                            <ul id="positiveComments">
+                                                {% for comentario in top_positivos %}
+                                                    <li>{{ comentario }}</li>
+                                                {% endfor %}
+                                            </ul>
+                                        {% else %}
+                                            <p>No hay comentarios positivos disponibles.</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card comment-card negative">
+                                    <div class="card-header">
+                                        <i class="fas fa-thumbs-down me-2"></i>
+                                        Comentarios Negativos
+                                    </div>
+                                    <div class="card-body">
+                                        {% if top_negativos %}
+                                            <ul id="negativeComments">
+                                                {% for comentario in top_negativos %}
+                                                    <li>{{ comentario }}</li>
+                                                {% endfor %}
+                                            </ul>
+                                        {% else %}
+                                            <p>No hay comentarios negativos disponibles.</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Nueva Card para comentarios neutros -->
+                            <div class="col-md-4">
+                                <div class="card comment-card neutral">
+                                    <div class="card-header">
+                                        <i class="fas fa-circle me-2"></i>
+                                        Comentarios Neutros
+                                    </div>
+                                    <div class="card-body">
+                                        {% if top_neutros %}
+                                            <ul id="neutralComments">
+                                                {% for comentario in top_neutros %}
+                                                    <li>{{ comentario }}</li>
+                                                {% endfor %}
+                                            </ul>
+                                        {% else %}
+                                            <p>No hay comentarios neutros disponibles.</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botón para descargar el CSV -->
+        <div class="download-btn">
+            <a href="{{ url_for('download_comments_csv') }}" class="btn btn-primary" download>
+                <i class="fas fa-download me-2"></i>
+                Descargar Comentarios Procesados (CSV)
+            </a>
+        </div>
     </div>
+</div>
 
     <!-- Footer -->
     <footer class="footer mt-5">
@@ -551,6 +701,76 @@
         console.error("Error al inicializar el mapa:", e);
     }
     /* eslint-enable */
+</script>
+<script>
+ document.addEventListener('DOMContentLoaded', function() {
+    const commentForm = document.getElementById('commentForm');
+    if (commentForm) {
+        commentForm.addEventListener('submit', async function(event) {
+            event.preventDefault();
+            
+            const commentInput = document.getElementById('commentInput').value;
+            const response = await fetch('/classify_comment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ comment: commentInput })
+            });
+            
+            const result = await response.json();
+            
+            const resultDiv = document.getElementById('classificationResult');
+            if (result.error) {
+                resultDiv.innerHTML = `<p class="text-danger">Error: ${result.error}</p>`;
+            } else {
+                resultDiv.innerHTML = `
+                    <p><strong>Comentario:</strong> ${result.comment}</p>
+                    <p><strong>Comentario Censurado:</strong> ${result.censored_comment}</p>
+                    <p><strong>Categoría:</strong> ${result.category}</p>
+                    <p><strong>Relevancia:</strong> ${result.relevance.toFixed(2)}</p>
+                `;
+                // Actualizar las cards dinámicamente sin recargar la página
+                if (result.category === "positivo_sugerencia") {
+                    const positiveList = document.getElementById('positiveComments');
+                    if (positiveList) {
+                        const newComment = document.createElement('li');
+                        newComment.textContent = result.censored_comment;
+                        positiveList.insertBefore(newComment, positiveList.firstChild);
+                        // Limitar a 5 comentarios
+                        while (positiveList.children.length > 5) {
+                                positiveList.removeChild(positiveList.lastChild);
+                            }
+                    }
+                } else if (result.category === "negativo") {
+                    const negativeList = document.getElementById('negativeComments');
+                    if (negativeList) {
+                        const newComment = document.createElement('li');
+                        newComment.textContent = result.censored_comment;
+                        negativeList.insertBefore(newComment, negativeList.firstChild);
+                        while (negativeList.children.length > 5) {
+                                negativeList.removeChild(negativeList.lastChild);
+                            }
+                    }
+                 
+                }  else if (result.category === "neutral") {
+                        const neutralList = document.getElementById('neutralComments');
+                        if (neutralList) {
+                            const newComment = document.createElement('li');
+                            newComment.textContent = result.censored_comment;
+                            neutralList.insertBefore(newComment, neutralList.firstChild);
+                            // Limitar a 5 comentarios
+                            while (neutralList.children.length > 5) {
+                                neutralList.removeChild(neutralList.lastChild);
+                            }
+                        }
+                    }
+            }
+        });
+    } else {
+        console.error("El elemento con ID 'commentForm' no se encontró en la página.");
+    }
+});
 </script>
 </body>
 </html>
