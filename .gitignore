@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.env
+*.venv
+env/
+venv/
+ENV/
+*.egg-info/
+*.egg
+*.log
+
+# Configuración de IDEs
+.vscode/
+.idea/
+*.swp
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+
+# Archivos sensibles
+*.key
+*.pem
+*.sqlite3
+instance/
+
+# Archivos específicos
+gtfs.zip
+full_data.csv
+processed_data.csv
+top_delays.csv

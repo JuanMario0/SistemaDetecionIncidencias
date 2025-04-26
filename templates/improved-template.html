@@ -64,6 +64,35 @@
             padding: 20px;
         }
         
+        /* Estilos para las tarjetas de comentarios */
+        .comment-card {
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        .comment-card.positive .card-header {
+            background-color: #28a745;
+            color: white;
+        }
+        .comment-card.negative .card-header {
+            background-color: #dc3545;
+            color: white;
+        }
+        .comment-card.neutral .card-header {
+            background-color: #6c757d;
+            color: white;
+        }
+        .comment-card ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        .comment-card ul li {
+            padding: 10px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .comment-card ul li:last-child {
+            border-bottom: none;
+        }
+        
         #map {
             height: 500px;
             border-radius: 10px;
@@ -238,10 +267,18 @@
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark mb-4">
         <div class="container">
-            <a class="navbar-brand" href="#">
+            <a class="navbar-brand" href="/">
                 <i class="fas fa-bus me-2"></i>
                 Análisis de Incidencias RTP
             </a>
+            <div class="navbar-nav ms-auto">
+                <span class="navbar-text me-3">
+                    Bienvenido, {{ email }}
+                </span>
+                <a href="/logout" class="btn btn-outline-light">
+                    <i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión
+                </a>
+            </div>
         </div>
     </nav>
 
@@ -277,7 +314,7 @@
             <div class="col-md-4">
                 <div class="card metric-card">
                     <div class="card-body">
-                        <div class="metric-value">{{ cluster_delays.mean()|round(1) }}</div>
+                        <div class="metric-value">{{ cluster_delays|round(1) }}</div>
                         <div class="metric-label">Retraso Promedio</div>
                         <small class="text-muted">Minutos de retraso</small>
                     </div>
@@ -394,18 +431,110 @@
                                     </div>
                                 </div>
                             </div>
-                            
                             <!-- Map -->
                             <div class="col-md-8">
                                 <div id="map"></div>
-                                <div class="mt-3 text-end">
-                                    <a href="/static/heatmap.html" target="_blank" class="btn btn-primary">
-                                        <i class="fas fa-fire me-2"></i>
-                                        Ver Mapa de Calor Completo
-                                    </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Comment Classification Section -->
+        <div class="row mt-5">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-comment-dots me-2 text-primary"></i>
+                        Clasificar Comentario
+                    </div>
+                    <div class="card-body">
+                        <form id="comment-form">
+                            <div class="mb-3">
+                                <label for="comment-input" class="form-label">Ingresa un comentario:</label>
+                                <textarea class="form-control" id="comment-input" name="comment" rows="3" placeholder="Escribe tu comentario aquí..."></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search me-2"></i>Clasificar
+                            </button>
+                        </form>
+                        <div id="comment-result" class="mt-4" style="display: none;">
+                            <div class="card">
+                                <div class="card-header">
+                                    <i class="fas fa-info-circle me-2 text-primary"></i>
+                                    Resultado de la Clasificación
+                                </div>
+                                <div class="card-body">
+                                    <p><strong>Comentario:</strong> <span id="result-comment"></span></p>
+                                    <p><strong>Comentario Censurado:</strong> <span id="result-censored"></span></p>
+                                    <p><strong>Categoría:</strong> <span id="result-category" class="delay-badge"></span></p>
+                                    <p><strong>Relevancia:</strong> <span id="result-relevance"></span></p>
                                 </div>
                             </div>
                         </div>
+                        <div id="comment-error" class="mt-3 text-danger" style="display: none;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cards para comentarios positivos, negativos y neutros -->
+        <div class="row mt-4">
+            <div class="col-md-4">
+                <div class="card comment-card positive">
+                    <div class="card-header">
+                        <i class="fas fa-thumbs-up me-2"></i>
+                        Comentarios Positivos/Sugerencias
+                    </div>
+                    <div class="card-body">
+                        {% if top_positivos %}
+                            <ul id="positiveComments">
+                                {% for comentario in top_positivos %}
+                                    <li>{{ comentario }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p>No hay comentarios positivos disponibles.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card comment-card negative">
+                    <div class="card-header">
+                        <i class="fas fa-thumbs-down me-2"></i>
+                        Comentarios Negativos
+                    </div>
+                    <div class="card-body">
+                        {% if top_negativos %}
+                            <ul id="negativeComments">
+                                {% for comentario in top_negativos %}
+                                    <li>{{ comentario }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p>No hay comentarios negativos disponibles.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card comment-card neutral">
+                    <div class="card-header">
+                        <i class="fas fa-circle me-2"></i>
+                        Comentarios Neutros
+                    </div>
+                    <div class="card-body">
+                        {% if top_neutros %}
+                            <ul id="neutralComments">
+                                {% for comentario in top_neutros %}
+                                    <li>{{ comentario }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p>No hay comentarios neutros disponibles.</p>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -552,5 +681,55 @@
     }
     /* eslint-enable */
 </script>
+
+<script>
+    $('#comment-form').on('submit', function(e) {
+        e.preventDefault();
+        const comment = $('#comment-input').val().trim();
+        
+        if (!comment) {
+            $('#comment-error').text('Por favor, ingresa un comentario').show();
+            $('#comment-result').hide();
+            return;
+        }
+
+        $.ajax({
+            url: '/classify_comment',
+            method: 'POST',
+            data: { comment: comment },
+            dataType: 'json',
+            success: function(data) {
+                if (data.error) {
+                    if (data.error.includes('inicia sesión')) {
+                        window.location.href = '/login';
+                        return;
+                    }
+                    $('#comment-error').text(data.error).show();
+                    $('#comment-result').hide();
+                } else {
+                    $('#comment-error').hide();
+                    $('#result-comment').text(data.comment);
+                    $('#result-censored').text(data.censored_comment);
+                    $('#result-category').text(data.category);
+                    $('#result-category').removeClass('delay-low delay-medium delay-high');
+                    if (data.category === 'negativo') {
+                        $('#result-category').addClass('delay-high');
+                    } else if (data.category === 'neutral') {
+                        $('#result-category').addClass('delay-medium');
+                    } else {
+                        $('#result-category').addClass('delay-low');
+                    }
+                    $('#result-relevance').text(data.relevance.toFixed(2));
+                    $('#comment-result').show();
+                }
+            },
+            error: function(xhr, status, error) {
+                $('#comment-error').text('Error al clasificar el comentario: ' + error).show();
+                $('#comment-result').hide();
+            }
+        });
+    });
+</script>
+
 </body>
 </html>
