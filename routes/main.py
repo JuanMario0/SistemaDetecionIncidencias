@@ -1,12 +1,12 @@
 import requests
-from flask import Blueprint, render_template, request, jsonify, session, redirect, url_for, send_from_directory
+from flask import Blueprint, render_template, request, jsonify, session, redirect, url_for, send_from_directory, Response
 import pandas as pd
 import numpy as np
 import os
 
 main_bp = Blueprint('main', __name__)
 
-API_BASE_URL = "http://127.0.0.1:8000"
+API_BASE_URL = "https://apiforrtp.onrender.com"
 
 @main_bp.route('/')
 def home():
@@ -90,10 +90,12 @@ def classify_comment():
     if 'api_token' not in session:
         return jsonify({'error': 'Por favor, inicia sesión'}), 401
 
-    comment = request.form.get('comment', '')
-    if not comment:
+    # Leer datos JSON del cuerpo de la solicitud
+    data = request.get_json()
+    if not data or 'comment' not in data or not data['comment']:
         return jsonify({'error': 'Por favor, ingresa un comentario'}), 400
 
+    comment = data['comment']
     url = f"{API_BASE_URL}/data/classify_comment"
     payload = {"comment": comment}
     headers = {
@@ -154,3 +156,31 @@ def heatmap():
     if 'api_token' not in session:
         return redirect(url_for('auth.login'))
     return send_from_directory('static', 'heatmap.html')
+
+# Nueva ruta para descargar comentarios CSV
+@main_bp.route('/data/download_comments_csv')
+def download_comments_csv():
+    if 'api_token' not in session:
+        return redirect(url_for('auth.login'))
+
+    url = f"{API_BASE_URL}/data/download_comments_csv"
+    headers = {
+        "Accept": "text/csv",
+        "Authorization": f"Bearer {session['api_token']}"
+    }
+    try:
+        response = requests.get(url, headers=headers)
+        if response.status_code == 401:
+            session.pop('api_token', None)
+            session.pop('email', None)
+            return redirect(url_for('auth.login'))
+        response.raise_for_status()
+
+        # Devolver el archivo CSV al cliente
+        return Response(
+            response.content,
+            mimetype="text/csv",
+            headers={"Content-Disposition": "attachment;filename=comments_processed.csv"}
+        )
+    except requests.exceptions.RequestException as e:
+        return jsonify({'error': f"Error al descargar el archivo CSV: {str(e)}"}), 500

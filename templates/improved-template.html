@@ -20,15 +20,43 @@
             --danger: #dc3545;
             --light: #f8f9fa;
             --dark: #212529;
+            --neutral: #6c757d;
         }
         
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f5f7fa;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); /* Fondo gradiente */
             margin: 0;
             padding: 0;
+            overflow-x: hidden;
         }
         
+        .welcome-title {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #9c1e24;
+            text-align: center;
+            margin-bottom: 20px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo {
+            display: block;
+            margin: 0 auto 20px;
+            max-width: 150px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .logo:hover {
+            transform: scale(1.05);
+        }
+
+        .container {
+            animation: fadeIn 1s ease-in-out;
+        }
+
         .navbar {
             background-color: #9c1e24;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -37,12 +65,33 @@
         .navbar-brand {
             font-weight: 700;
             color: white !important;
+            transition: color 0.3s ease;
+        }
+
+        .navbar-brand:hover {
+            color: #d70b37 !important;
+        }
+
+        .navbar-nav .btn-outline-light {
+            border-color: white;
+            color: white;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .navbar-nav .btn-outline-light:hover {
+            background-color: #d70b37;
+            border-color: #d70b37;
+            color: white;
+        }
+
+        .navbar-text {
+            color: white;
         }
         
         .card {
             border-radius: 10px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-            transition: transform 0.3s ease;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
             margin-bottom: 20px;
             border: none;
         }
@@ -58,6 +107,7 @@
             font-weight: 600;
             padding: 15px 25px;
             border-radius: 10px 10px 0 0 !important;
+            color: #9c1e24;
         }
         
         .card-body {
@@ -68,29 +118,86 @@
         .comment-card {
             border-radius: 10px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border-left: 5px solid;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
+
+        .comment-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .comment-card.positive {
+            border-left-color: var(--success);
+        }
+
         .comment-card.positive .card-header {
             background-color: #28a745;
             color: white;
         }
+
+        .comment-card.negative {
+            border-left-color: var(--danger);
+        }
+
         .comment-card.negative .card-header {
             background-color: #dc3545;
             color: white;
         }
+
+        .comment-card.neutral {
+            border-left-color: var(--neutral);
+        }
+
         .comment-card.neutral .card-header {
             background-color: #6c757d;
             color: white;
         }
+
         .comment-card ul {
             list-style-type: none;
             padding: 0;
+            margin: 0;
+            max-height: 200px;
+            overflow-y: auto;
         }
-        .comment-card ul li {
-            padding: 10px 0;
-            border-bottom: 1px solid #e9ecef;
+
+        .comment-card li {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
         }
-        .comment-card ul li:last-child {
+
+        .comment-card li:last-child {
             border-bottom: none;
+        }
+
+                /* Estilos para el resultado de clasificación */
+        #classificationResult {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        #classificationResult.positive {
+            background-color: rgba(25, 135, 84, 0.1); /* Verde claro */
+            border: 1px solid var(--success);
+            color: var(--success);
+        }
+
+        #classificationResult.negative {
+            background-color: rgba(220, 53, 69, 0.1); /* Rojo claro */
+            border: 1px solid var(--danger);
+            color: var(--danger);
+        }
+
+        #classificationResult.neutral {
+            background-color: rgba(108, 117, 125, 0.1); /* Gris claro */
+            border: 1px solid var(--neutral);
+            color: var(--neutral);
         }
         
         #map {
@@ -144,16 +251,16 @@
             vertical-align: middle;
         }
         
-        
         .form-select, .form-control {
             border-radius: 8px;
             padding: 10px 15px;
             border: 1px solid rgba(0, 0, 0, 0.1);
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
         }
         
         .form-select:focus, .form-control:focus {
-            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
-            border-color: #86b7fe;
+            box-shadow: 0 0 0 0.25rem rgba(156, 30, 36, 0.3);
+            border-color: #9c1e24;
         }
         
         .btn-primary {
@@ -162,11 +269,13 @@
             border-radius: 8px;
             padding: 10px 20px;
             font-weight: 500;
+            transition: background-color 0.3s ease, transform 0.3s ease;
         }
         
         .btn-primary:hover {
             background-color: #d70b37;
-            border-color: #0a58ca;
+            border-color: #d70b37;
+            transform: translateY(-2px);
         }
         
         .section-title {
@@ -236,7 +345,7 @@
         }
         
         .cluster-btn:hover:not(.active) {
-            background-color: rgba(13, 110, 253, 0.1);
+            background-color: rgba(156, 30, 36, 0.1);
         }
         
         .footer {
@@ -261,9 +370,38 @@
                 font-size: 1.5rem;
             }
         }
+
+        /* Estilos para la sección de comentarios */
+        .comment-section {
+            margin-top: 40px;
+        }
+
+        #classificationResult {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 8px;
+            background-color: rgba(0, 0, 0, 0.02);
+        }
+
+        .download-btn {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        /* Animación de entrada */
+        @keyframes fadeIn {
+            0% { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
 <body>
+    <!-- Título de bienvenida y logo -->
+    <div class="container mt-4">
+        <h1 class="welcome-title">Análisis de Incidencias RTP en la CDMX</h1>
+        <img src="/static/mascotartp.png" alt="Logo RTP" class="logo">
+    </div>
+
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark mb-4">
         <div class="container">
@@ -275,7 +413,7 @@
                 <span class="navbar-text me-3">
                     Bienvenido, {{ email }}
                 </span>
-                <a href="/logout" class="btn btn-outline-light">
+                <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-light">
                     <i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión
                 </a>
             </div>
@@ -441,103 +579,97 @@
             </div>
         </div>
 
-        <!-- Comment Classification Section -->
-        <div class="row mt-5">
+        <!-- Cards para comentarios positivos, negativos y neutros -->
+        <div class="row comment-section mt-4">
             <div class="col-12">
                 <div class="card">
                     <div class="card-header">
-                        <i class="fas fa-comment-dots me-2 text-primary"></i>
-                        Clasificar Comentario
+                        <i class="fas fa-comments me-2 text-primary"></i>
+                        Análisis de Comentarios
                     </div>
                     <div class="card-body">
-                        <form id="comment-form">
-                            <div class="mb-3">
-                                <label for="comment-input" class="form-label">Ingresa un comentario:</label>
-                                <textarea class="form-control" id="comment-input" name="comment" rows="3" placeholder="Escribe tu comentario aquí..."></textarea>
+                        <!-- Formulario para agregar nuevos comentarios -->
+                        <h5 class="mb-3">Agregar Nuevo Comentario</h5>
+                        <form id="commentForm">
+                            <div class="form-group mb-3">
+                                <label for="commentInput">Escribe tu comentario:</label>
+                                <textarea class="form-control" id="commentInput" name="comment" rows="3" required></textarea>
                             </div>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-search me-2"></i>Clasificar
-                            </button>
+                            <button type="submit" class="btn btn-primary">Clasificar Comentario</button>
                         </form>
-                        <div id="comment-result" class="mt-4" style="display: none;">
-                            <div class="card">
-                                <div class="card-header">
-                                    <i class="fas fa-info-circle me-2 text-primary"></i>
-                                    Resultado de la Clasificación
+                        <div id="classificationResult"></div>
+
+                        <!-- Cards para comentarios -->
+                        <div class="row mt-4">
+                            <div class="col-md-4">
+                                <div class="card comment-card positive">
+                                    <div class="card-header">
+                                        <i class="fas fa-thumbs-up me-2"></i>
+                                        Comentarios Positivos/Sugerencias
+                                    </div>
+                                    <div class="card-body">
+                                        {% if top_positivos %}
+                                            <ul id="positiveComments">
+                                                {% for comentario in top_positivos %}
+                                                    <li>{{ comentario }}</li>
+                                                {% endfor %}
+                                            </ul>
+                                        {% else %}
+                                            <p>No hay comentarios positivos disponibles.</p>
+                                        {% endif %}
+                                    </div>
                                 </div>
-                                <div class="card-body">
-                                    <p><strong>Comentario:</strong> <span id="result-comment"></span></p>
-                                    <p><strong>Comentario Censurado:</strong> <span id="result-censored"></span></p>
-                                    <p><strong>Categoría:</strong> <span id="result-category" class="delay-badge"></span></p>
-                                    <p><strong>Relevancia:</strong> <span id="result-relevance"></span></p>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card comment-card negative">
+                                    <div class="card-header">
+                                        <i class="fas fa-thumbs-down me-2"></i>
+                                        Comentarios Negativos
+                                    </div>
+                                    <div class="card-body">
+                                        {% if top_negativos %}
+                                            <ul id="negativeComments">
+                                                {% for comentario in top_negativos %}
+                                                    <li>{{ comentario }}</li>
+                                                {% endfor %}
+                                            </ul>
+                                        {% else %}
+                                            <p>No hay comentarios negativos disponibles.</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card comment-card neutral">
+                                    <div class="card-header">
+                                        <i class="fas fa-circle me-2"></i>
+                                        Comentarios Neutros
+                                    </div>
+                                    <div class="card-body">
+                                        {% if top_neutros %}
+                                            <ul id="neutralComments">
+                                                {% for comentario in top_neutros %}
+                                                    <li>{{ comentario }}</li>
+                                                {% endfor %}
+                                            </ul>
+                                        {% else %}
+                                            <p>No hay comentarios neutros disponibles.</p>
+                                        {% endif %}
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        <div id="comment-error" class="mt-3 text-danger" style="display: none;"></div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Cards para comentarios positivos, negativos y neutros -->
-        <div class="row mt-4">
-            <div class="col-md-4">
-                <div class="card comment-card positive">
-                    <div class="card-header">
-                        <i class="fas fa-thumbs-up me-2"></i>
-                        Comentarios Positivos/Sugerencias
-                    </div>
-                    <div class="card-body">
-                        {% if top_positivos %}
-                            <ul id="positiveComments">
-                                {% for comentario in top_positivos %}
-                                    <li>{{ comentario }}</li>
-                                {% endfor %}
-                            </ul>
-                        {% else %}
-                            <p>No hay comentarios positivos disponibles.</p>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card comment-card negative">
-                    <div class="card-header">
-                        <i class="fas fa-thumbs-down me-2"></i>
-                        Comentarios Negativos
-                    </div>
-                    <div class="card-body">
-                        {% if top_negativos %}
-                            <ul id="negativeComments">
-                                {% for comentario in top_negativos %}
-                                    <li>{{ comentario }}</li>
-                                {% endfor %}
-                            </ul>
-                        {% else %}
-                            <p>No hay comentarios negativos disponibles.</p>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card comment-card neutral">
-                    <div class="card-header">
-                        <i class="fas fa-circle me-2"></i>
-                        Comentarios Neutros
-                    </div>
-                    <div class="card-body">
-                        {% if top_neutros %}
-                            <ul id="neutralComments">
-                                {% for comentario in top_neutros %}
-                                    <li>{{ comentario }}</li>
-                                {% endfor %}
-                            </ul>
-                        {% else %}
-                            <p>No hay comentarios neutros disponibles.</p>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
+        <!-- Botón para descargar el CSV -->
+        <div class="download-btn">
+            <a href="{{ url_for('main.download_comments_csv') }}" class="btn btn-primary" download>
+                <i class="fas fa-download me-2"></i>
+                Descargar Comentarios Procesados (CSV)
+            </a>
         </div>
     </div>
 
@@ -558,7 +690,7 @@
         let map = L.map('map').setView([parseFloat("{{ map_center[0]|float }}"), parseFloat("{{ map_center[1]|float }}")], 12);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(map);
         
         let marker;
@@ -680,56 +812,86 @@
         console.error("Error al inicializar el mapa:", e);
     }
     /* eslint-enable */
-</script>
-
-<script>
-    $('#comment-form').on('submit', function(e) {
-        e.preventDefault();
-        const comment = $('#comment-input').val().trim();
-        
-        if (!comment) {
-            $('#comment-error').text('Por favor, ingresa un comentario').show();
-            $('#comment-result').hide();
-            return;
-        }
-
-        $.ajax({
-            url: '/classify_comment',
-            method: 'POST',
-            data: { comment: comment },
-            dataType: 'json',
-            success: function(data) {
-                if (data.error) {
-                    if (data.error.includes('inicia sesión')) {
-                        window.location.href = '/login';
-                        return;
-                    }
-                    $('#comment-error').text(data.error).show();
-                    $('#comment-result').hide();
-                } else {
-                    $('#comment-error').hide();
-                    $('#result-comment').text(data.comment);
-                    $('#result-censored').text(data.censored_comment);
-                    $('#result-category').text(data.category);
-                    $('#result-category').removeClass('delay-low delay-medium delay-high');
-                    if (data.category === 'negativo') {
-                        $('#result-category').addClass('delay-high');
-                    } else if (data.category === 'neutral') {
-                        $('#result-category').addClass('delay-medium');
-                    } else {
-                        $('#result-category').addClass('delay-low');
-                    }
-                    $('#result-relevance').text(data.relevance.toFixed(2));
-                    $('#comment-result').show();
+    </script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+    const commentForm = document.getElementById('commentForm');
+    if (commentForm) {
+        commentForm.addEventListener('submit', async function(event) {
+            event.preventDefault();
+            
+            const commentInput = document.getElementById('commentInput').value;
+            const response = await fetch('/classify_comment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ comment: commentInput })
+            });
+            
+            const result = await response.json();
+            
+            const resultDiv = document.getElementById('classificationResult');
+            if (result.error) {
+                resultDiv.innerHTML = `<p class="text-danger">Error: ${result.error}</p>`;
+                resultDiv.className = 'text-danger'; // Resetear clases en caso de error
+            } else {
+                // Mostrar los resultados
+                resultDiv.innerHTML = `
+                    <p><strong>Comentario:</strong> ${result.comment}</p>
+                    <p><strong>Comentario Censurado:</strong> ${result.censored_comment}</p>
+                    <p><strong>Categoría:</strong> ${result.category}</p>
+                    <p><strong>Relevancia:</strong> ${result.relevance.toFixed(2)}</p>
+                `;
+                
+                // Aplicar clase según la categoría
+                resultDiv.className = ''; // Resetear clases previas
+                if (result.category === "positivo_sugerencia") {
+                    resultDiv.classList.add('positive');
+                } else if (result.category === "negativo") {
+                    resultDiv.classList.add('negative');
+                } else if (result.category === "neutral") {
+                    resultDiv.classList.add('neutral');
                 }
-            },
-            error: function(xhr, status, error) {
-                $('#comment-error').text('Error al clasificar el comentario: ' + error).show();
-                $('#comment-result').hide();
+
+                // Actualizar las cards dinámicamente sin recargar la página
+                if (result.category === "positivo_sugerencia") {
+                    const positiveList = document.getElementById('positiveComments');
+                    if (positiveList) {
+                        const newComment = document.createElement('li');
+                        newComment.textContent = result.censored_comment;
+                        positiveList.insertBefore(newComment, positiveList.firstChild);
+                        while (positiveList.children.length > 5) {
+                            positiveList.removeChild(positiveList.lastChild);
+                        }
+                    }
+                } else if (result.category === "negativo") {
+                    const negativeList = document.getElementById('negativeComments');
+                    if (negativeList) {
+                        const newComment = document.createElement('li');
+                        newComment.textContent = result.censored_comment;
+                        negativeList.insertBefore(newComment, negativeList.firstChild);
+                        while (negativeList.children.length > 5) {
+                            negativeList.removeChild(negativeList.lastChild);
+                        }
+                    }
+                } else if (result.category === "neutral") {
+                    const neutralList = document.getElementById('neutralComments');
+                    if (neutralList) {
+                        const newComment = document.createElement('li');
+                        newComment.textContent = result.censored_comment;
+                        neutralList.insertBefore(newComment, neutralList.firstChild);
+                        while (neutralList.children.length > 5) {
+                            neutralList.removeChild(neutralList.lastChild);
+                        }
+                    }
+                }
             }
         });
-    });
-</script>
-
+    } else {
+        console.error("El elemento con ID 'commentForm' no se encontró en la página.");
+    }
+});
+    </script>
 </body>
 </html>

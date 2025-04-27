@@ -5,7 +5,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, sessio
 auth_bp = Blueprint('auth', __name__)
 
 # URL base de la API FastAPI
-API_BASE_URL = "http://127.0.0.1:8000"
+API_BASE_URL = "https://apiforrtp.onrender.com"
 
 # Función para registrar un usuario en la API FastAPI
 def register_user(email, password):
