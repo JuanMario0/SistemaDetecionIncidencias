@@ -11,5 +11,6 @@ app.register_blueprint(auth_bp)
 app.register_blueprint(main_bp)
 
 if __name__ == '__main__':
+    port = int(os.getenv("PORT", 5000))
     print("Current working directory:", os.getcwd())
     app.run(host='0.0.0.0', port=3000)
